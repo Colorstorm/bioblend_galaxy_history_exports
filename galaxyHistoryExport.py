@@ -74,11 +74,11 @@ def main(arguments):
                     if not histories:
                         print_status(user['username'], history_id, 3, args['warning'])
                     else:
-                        export_history(tmp_gi, histories[0], user, args['error'], args['warning'])
+                        export_history(tmp_gi, histories[0], user, args['errorCorrection'], args['warning'])
             else:
                 histories_list = tmp_gi.histories.get_histories(deleted=False)
                 for history in histories_list:
-                    export_history(tmp_gi, history, user, args['error'], args['warning'])
+                    export_history(tmp_gi, history, user, args['errorCorrection'], args['warning'])
         else:
             print_status(user['username'], '', 1, args['warning'])
 
