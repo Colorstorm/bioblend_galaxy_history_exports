@@ -5,7 +5,7 @@ import argparse
 
 def print_status(p_username, p_history_id, p_status, p_warnings):
     switch = {
-        0: ' ' * 9 + p_username[:18] + ' ' * (20 - len(p_username)) + p_history_id + ' succesfully exported',
+        0: ' ' * 9 + p_username[:18] + ' ' * (20 - len(p_username)) + p_history_id + ' successfully exported',
         1: 'Warning: ' + p_username[:18] + ' ' * (36 - len(p_username)) + ' will be skipped',
         2: 'Error:   ' + p_username[:18] + ' ' * (20 - len(p_username)) + p_history_id + ' unkown error',
         3: 'Warning: ' + p_username[:18] + ' ' * (20 - len(p_username)) + p_history_id +
