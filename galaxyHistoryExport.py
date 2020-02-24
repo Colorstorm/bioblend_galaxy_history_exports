@@ -1,13 +1,13 @@
 from bioblend.galaxy import GalaxyInstance
 import os
 import argparse
-
+import pandas as pd
 
 #########################
 # Functions
 ########################
 
-def print_status(p_username, p_history_id, p_status, p_warnings):
+def print_status(p_username, p_history_id, p_history_name,p_status, p_warnings):
     switch = {
         0: ' ' * 9 + p_username[:18] + ' ' * (20 - len(p_username)) + p_history_id + ' successfully exported',
         1: 'Warning: ' + p_username[:18] + ' ' * (36 - len(p_username)) + ' will be skipped',
@@ -16,9 +16,17 @@ def print_status(p_username, p_history_id, p_status, p_warnings):
            ' ' * (17 - len(p_history_id)) + ' does not exist',
         4: 'Warning: ' + p_username[:18] + ' ' * (20 - len(p_username)) + p_history_id + ' is already exported'
     }
-
+    status = {
+        0: 'exported',
+        1: 'not_exported',
+        2: 'not_exported',
+        3: 'does_not_exist',
+        4: 'exported'
+    }
+    status_list.append([status[p_status], p_username, p_history_id, p_history_name])
     if p_warnings:
         print(switch[p_status])
+
     else:
         if p_status != 1 and p_status != 4:
             print(switch[p_status])
@@ -33,7 +41,7 @@ def export_history(p_gi, p_history, p_user, p_path, p_update, p_warning, p_print
             f = open(export_file, 'wb')
             p_gi.histories.download_history(history_id=p_history['id'], jeha_id=jeha_id, outf=f)
             f.close()
-            print_status(p_user['username'], p_history['id'], 0, p_warning)
+            print_status(p_user['username'], p_history['id'], p_history['name'], 0, p_warning)
 
             error_path = p_user['username'] + "/" + p_history['id'] + '.error.txt'
             if os.path.isfile(error_path):
@@ -46,9 +54,15 @@ def export_history(p_gi, p_history, p_user, p_path, p_update, p_warning, p_print
             f.writelines(''.join(key + str(dictionary[key]) + '\n' for key in dictionary))
             f.writelines(str(e))
             f.close()
-            print_status(p_user['username'], p_history['id'], 2, p_warning)
+            print_status(p_user['username'], p_history['id'], p_history['name'], 2, p_warning)
     else:
-        print_status(p_user['username'], p_history['id'], 4, p_warning)
+        print_status(p_user['username'], p_history['id'], p_history['name'], 4, p_warning)
+
+#########################
+# attributes
+#########################
+
+status_list = []
 
 
 #########################
@@ -79,7 +93,7 @@ def main(arguments):
                     histories = tmp_gi.histories.get_histories(history_id=history_id, deleted=False)
 
                     if not histories:
-                        print_status(user['username'], history_id, 3, args['warning'])
+                        print_status(user['username'], history_id, None, 3, args['warning'])
                     else:
                         export_history(tmp_gi, histories[0], user, path, args['error'], args['warning'],
                                        args['printErrors'])
@@ -89,7 +103,9 @@ def main(arguments):
                     export_history(tmp_gi, history, user, path, args['errorCorrection'], args['warning'],
                                    args['printErrors'])
         else:
-            print_status(user['username'], '', 1, args['warning'])
+            print_status(user['username'], None, None, 1, args['warning'])
+    df = pd.DataFrame(data=status_list, columns=['staus', 'username', 'history_id', 'history_name'])
+    df.to_csv(args['outputDirectory'] + '/status.csv')
 
 
 ##############################
@@ -107,12 +123,12 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--ids', type=str, nargs='+', default=None,
                         help='To export only histories with the id')
     parser.add_argument('-o', '--outputDirectory', type=str, default=os.getcwd(),
-                        help='Set the path to the output directory, default it is your working directory')
+                        help='Set the path to the output directory, default it is your working directory, default is it the current working directory')
     parser.add_argument('-e', '--errorCorrection', type=bool, default=False,
-                        help='Mode for error correction, if there is a tar.gz file for the history it will skip these')
+                        help='Mode for error correction, if there is a tar.gz file for the history it will be skipped, default false')
     parser.add_argument('-w', '--warning', type=bool, default=False,
-                        help='Print warnings')
+                        help='Print warnings, default false')
     parser.add_argument('-p', '--printErrors', type=bool, default=False,
-                        help='Print error messages, for debugging purposes')
+                        help='Print error messages, for debugging purposes, default false')
 
     main(parser.parse_args())
